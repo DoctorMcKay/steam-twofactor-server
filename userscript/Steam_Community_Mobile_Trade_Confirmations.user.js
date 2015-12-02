@@ -55,6 +55,7 @@ if (!location.search || location.search == "?options") {
 }
 
 function redirectToConf() {
+	unsafeWindow.ShowBlockingWaitDialog('Loading...', 'Loading your confirmations...');
 	getKey("conf", function(time, key) {
 		location.href = "/mobileconf/conf?p=" + g_DeviceID + "&a=" + unsafeWindow.g_steamID + "&k=" + encodeURIComponent(key) + "&t=" + time + "&m=android&tag=conf";
 	});
