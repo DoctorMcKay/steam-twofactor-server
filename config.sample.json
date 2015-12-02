@@ -1,0 +1,9 @@
+{
+	"ip": "0.0.0.0",
+	"port": 8080,
+	"behindProxy": false,
+	"restrictAccess": false,
+	"allowedAddresses": [
+		"127.0.0.1"
+	]
+}
