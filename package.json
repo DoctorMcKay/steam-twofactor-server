@@ -10,5 +10,6 @@
 		"express": "^4.13.3",
 		"steam-totp": "^1.1.0"
 	},
-	"license": "MIT"
+	"license": "MIT",
+	"private": true
 }
