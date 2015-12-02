@@ -52,6 +52,8 @@ if (!location.search || location.search == "?options") {
 	} else {
 		redirectToConf();
 	}
+} else {
+	$('#mobileconf_empty').append('<div style="margin-top: 20px"><a href="/mobileconf/conf?options" style="text-decoration: underline">Change 2FA Server URL</a></div>');
 }
 
 function redirectToConf() {
