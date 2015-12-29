@@ -94,6 +94,11 @@ function loadSecret(req, res, next) {
 }
 
 function reqGetCode(req, res) {
+	if(!req.appSecrets.shared_secret) {
+		res.status(404).send("<h1>404 Not Found</h1>No <code>shared_secret</code> was found for that username.");
+		return;
+	}
+	
 	console.log("User requesting login code for " + req.params.username + " from " + req.ip);
 	res.header("Content-Type", "text/plain");
 	res.send(SteamTotp.generateAuthCode(req.appSecrets.shared_secret));
