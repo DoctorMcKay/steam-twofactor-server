@@ -4,8 +4,11 @@
 // @description Enables mobile trade confirmations in the web browser
 // @include     https://steamcommunity.com/mobileconf/conf*
 // @include     https://steamcommunity.com/tradeoffer/*
+// @include     https://steamcommunity.com/login/*
+// @include     https://store.steampowered.com/login/*
+// @include     https://store.steampowered.com//login/*
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
-// @version     1.1.0
+// @version     1.2.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -135,3 +138,35 @@ function getKey(tag, callback) {
 		});
 	});
 }
+
+// Add auto-code-entering for logins
+(function() {
+	if(unsafeWindow.CLoginPromptManager) {
+		var serverUrl = GM_getValue("serverurl");
+		if(!serverUrl) {
+			return;
+		}
+
+		var proto = unsafeWindow.CLoginPromptManager.prototype;
+
+		var originalStartTwoFactorAuthProcess = proto.StartTwoFactorAuthProcess;
+		proto.StartTwoFactorAuthProcess = exportFunction(function() {
+			originalStartTwoFactorAuthProcess.apply(this, arguments);
+
+			var self = this;
+			var username = this.m_strUsernameEntered;
+			GM_xmlhttpRequest({
+				"method": "GET",
+				"url": serverUrl + "code/" + username,
+				"onload": function(response) {
+					if(!response.responseText || response.responseText.length != 5) {
+						return;
+					}
+					
+					document.getElementById('twofactorcode_entry').value = response.responseText;
+					self.SubmitTwoFactorCode();
+				}
+			});
+		}, unsafeWindow);
+	}
+})();
