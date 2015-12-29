@@ -1,7 +1,7 @@
 {
 	"name": "steam-twofactor-server",
 	"description": "HTTP server to serve up Steam TOTP codes and confirmation keys",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/DoctorMcKay/steam-twofactor-server.git"
