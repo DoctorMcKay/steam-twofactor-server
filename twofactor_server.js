@@ -23,7 +23,6 @@ fs.readFile(__dirname + '/config.json', function(err, file) {
 	}
 
 	// Set up our middleware
-	server.use(cors);
 	server.use(loadConfig);
 	server.use(checkAuthorized);
 
@@ -32,11 +31,6 @@ fs.readFile(__dirname + '/config.json', function(err, file) {
 	server.get(rootPath + "code/:username", loadSecret, reqGetCode);
 	server.get(rootPath + "key/:username/:tag", loadSecret, reqGetKey);
 });
-
-function cors(req, res, next) {
-	res.header("Access-Control-Allow-Origin", "*");
-	next();
-}
 
 function loadConfig(req, res, next) {
 	fs.readFile(__dirname + '/config.json', function(err, file) {
