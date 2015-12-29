@@ -8,7 +8,7 @@
 // @include     https://store.steampowered.com/login/*
 // @include     https://store.steampowered.com//login/*
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
-// @version     1.2.0
+// @version     1.2.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -151,7 +151,7 @@ function getKey(tag, callback) {
 
 		var originalStartTwoFactorAuthProcess = proto.StartTwoFactorAuthProcess;
 		proto.StartTwoFactorAuthProcess = exportFunction(function() {
-			originalStartTwoFactorAuthProcess.apply(this, arguments);
+			originalStartTwoFactorAuthProcess.call(this);
 
 			var self = this;
 			var username = this.m_strUsernameEntered;
@@ -164,7 +164,7 @@ function getKey(tag, callback) {
 					}
 					
 					document.getElementById('twofactorcode_entry').value = response.responseText;
-					self.SubmitTwoFactorCode();
+					proto.SubmitTwoFactorCode.call(self);
 				}
 			});
 		}, unsafeWindow);
