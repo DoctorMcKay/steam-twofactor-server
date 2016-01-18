@@ -17,7 +17,7 @@
 // ==/UserScript==
 
 var g_DeviceID = encodeURIComponent("android:" +
-	hex_sha1(unsafeWindow.g_steamID).replace(/^([a-z0-9]{8})([a-z0-9]{4})([a-z0-9]{4})([a-z0-9]{4})([a-z0-9]{12}).*$/, '$1-$2-$3-$4-$5'));
+	hex_sha1(unsafeWindow.g_steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5'));
 
 function error(msg) {
 	GM_setValue("errormsg", msg);
