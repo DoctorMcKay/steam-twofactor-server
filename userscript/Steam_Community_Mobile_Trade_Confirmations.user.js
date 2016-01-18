@@ -8,14 +8,16 @@
 // @include     https://store.steampowered.com/login/*
 // @include     https://store.steampowered.com//login/*
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
-// @version     1.2.1
+// @require     https://www.doctormckay.com/utilities/sha1.js
+// @version     1.3.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_xmlhttpRequest
 // ==/UserScript==
 
-var g_DeviceID = encodeURIComponent("android:" + Date.now());
+var g_DeviceID = encodeURIComponent("android:" +
+	hex_sha1(unsafeWindow.g_steamID).replace(/^([a-z0-9]{8})([a-z0-9]{4})([a-z0-9]{4})([a-z0-9]{4})([a-z0-9]{12}).*$/, '$1-$2-$3-$4-$5'));
 
 function error(msg) {
 	GM_setValue("errormsg", msg);
