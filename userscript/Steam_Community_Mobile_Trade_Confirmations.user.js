@@ -9,7 +9,7 @@
 // @include     https://store.steampowered.com//login/*
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://www.doctormckay.com/utilities/sha1.js
-// @version     1.3.0
+// @version     1.4.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -61,6 +61,42 @@ if(location.href.match(/mobileconf/)) {
 		}
 	} else {
 		$('#mobileconf_empty').append('<div style="margin-top: 20px"><a href="/mobileconf/conf?options" style="text-decoration: underline">Change 2FA Server URL</a></div>');
+		
+		if ($('.mobileconf_list_entry').length > 0) {
+			var $acceptAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px 50px"><span>Accept All</span></a>');
+			$('.responsive_page_template_content').prepend($acceptAll);
+			$acceptAll.click(function() {
+				doAcceptAll();
+			});
+		}
+	}
+}
+
+function doAcceptAll(failures) {
+	var $confs = $('.mobileconf_list_entry');
+	
+	if ($confs.length == 0) {
+		location.reload();
+		return;
+	}
+	
+	var modal = unsafeWindow.ShowBlockingWaitDialog("Accepting Confirmations...", $confs.length + " confirmation" + ($confs.length == 1 ? '' : 's') + " remaining..." + (failures ? '<br />' + failures + ' failure' + (failures == 1 ? '' : 's') : ''));
+	var $conf = $($confs[0]);
+	
+	unsafeWindow.SendMobileConfirmationOp("allow", $conf.data('confid'), $conf.data('key'), exportFunction(function() {
+		// success
+		confDone();
+	}, unsafeWindow), exportFunction(function() {
+		// error
+		failures = failures || 0;
+		failures++;
+		confDone();
+	}, unsafeWindow));
+	
+	function confDone() {
+		unsafeWindow.RemoveConfirmationFromList($conf.data('confid'));
+		modal.Dismiss();
+		doAcceptAll(failures);
 	}
 }
 
