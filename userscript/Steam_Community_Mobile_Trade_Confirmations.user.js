@@ -9,14 +9,14 @@
 // @include     https://store.steampowered.com//login/*
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://www.doctormckay.com/utilities/sha1.js
-// @version     1.4.0
+// @version     1.4.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_xmlhttpRequest
 // ==/UserScript==
 
-var g_DeviceID = typeof g_steamID === 'string' ? encodeURIComponent("android:" +
+var g_DeviceID = typeof unsafeWindow.g_steamID === 'string' ? encodeURIComponent("android:" +
 	hex_sha1(unsafeWindow.g_steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5')) : "";
 
 function error(msg) {
