@@ -8,6 +8,49 @@ alternate accounts. You should use the app for any account with significant valu
 There is no logging as of yet. It just prints messages to stdout. You could use `forever` to redirect these into a file.
 You could also use `forever` to run it as a daemon.
 
+## PHP Version
+
+If Node.js isn't your thing or you already have a PHP-supporting webserver running, a PHP version is also available in this repo.
+Just upload the included steam_twofactor.php somewhere to your webserver. Create a directory somewhere else to store your secrets
+and upload them to that directory as .json files (just like how the Node version wants them). **Make sure this directory is not
+web accessible.** You could accomplish this by putting the directory outside of your webroot, or by configuring your server to deny
+access to this directory (e.g. via .htaccess).
+
+Once everything is uploaded, edit steam_twofactor.php (you can rename this file if you wish) and put the path (relative to the script)
+to your secrets directory (which can be named anything you wish) in the `$secrets_dir` variable at the top. You can also configure the
+other settings via the variables at the top of the file.
+
+This PHP script is entirely standalone and has no dependencies of any kind; all you need to upload is the file itself and your secrets.
+
+Once uploaded, all endpoints provided by the Node server are accessible via the script. For example, if you uploaded the script to
+https://www.example.com/steam_twofactor.php, then to get a login code for the account "gaben" you would request
+https://www.example.com/steam_twofactor.php/code/gaben
+
+If you're using the included user script, then your server URL should be the full URL to the base script, followed by a slash. Following
+the above example URL, it would be https://www.example.com/steam_twofactor.php/
+
+If you're using Apache, PATH_INFO should already be set up and working. If you're using nginx, then your configuration might not work
+with PATH_INFO. You can set it up by using this php-fpm location block (replace `fastcgi_pass` if you're using a Unix socket):
+
+	location ~ \.php(/|$) {
+		# Split out path info
+		fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+		
+		# Make sure that the base script exists
+		if (!-f $document_root$fastcgi_script_name) {
+			return 404;
+		}
+
+		# Mitigate https://httpoxy.org vulns
+		fastcgi_param HTTP_PROXY "";
+
+		include /etc/nginx/fastcgi_params;
+		fastcgi_pass 127.0.0.1:9000; # replace this if you're using a Unix sock
+		fastcgi_index index.php;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_param PATH_INFO $fastcgi_path_info; # pass the path info to php-fpm
+	}
+
 ## Configuration
 
 Copy `config.sample.json` to `config.json` and edit the settings as you wish.
