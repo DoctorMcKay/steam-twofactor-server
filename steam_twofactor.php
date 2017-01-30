@@ -81,7 +81,7 @@ function get_time_offset() {
 		return 0;
 	}
 	
-	return SteamTotp::getTimeOffset() || 0;
+	return SteamTotp::getTimeOffset() ?: 0;
 }
 
 
