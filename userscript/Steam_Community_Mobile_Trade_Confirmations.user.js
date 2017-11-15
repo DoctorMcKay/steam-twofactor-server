@@ -7,27 +7,32 @@
 // @include     https://steamcommunity.com/login/*
 // @include     https://store.steampowered.com/login/*
 // @include     https://store.steampowered.com//login/*
+// @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
-// @require     https://www.doctormckay.com/utilities/sha1.js
-// @version     1.4.2
+// @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
+// @version     1.4.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_xmlhttpRequest
+// @grant       GM.setValue
+// @grant       GM.getValue
+// @grant       GM.deleteValue
+// @grant       GM.xmlHttpRequest
 // ==/UserScript==
 
 var g_DeviceID = typeof unsafeWindow.g_steamID === 'string' ? encodeURIComponent("android:" +
 	hex_sha1(unsafeWindow.g_steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5')) : "";
 
 function error(msg) {
-	GM_setValue("errormsg", msg);
+	GM.setValue("errormsg", msg);
 	location.href = "/mobileconf/conf?options";
 }
 
 if(location.href.match(/mobileconf/)) {
 	unsafeWindow.SGHandler = cloneInto({"getResultStatus": function() { return "busy"; }, "getResultValue": function() { return ""; }}, unsafeWindow, {"cloneFunctions": true});
 	unsafeWindow.GetValueFromLocalURL = exportFunction(function(url, timeout, success, error, fatal) {
-		var serverUrl = GM_getValue("serverurl");
+		var serverUrl = GM.getValue("serverurl");
 		var accountName = $('#account_pulldown').text().trim();
 
 		getKey("allow", function(time, key) {
@@ -36,15 +41,15 @@ if(location.href.match(/mobileconf/)) {
 	}, unsafeWindow);
 
 	if (!location.search || location.search == "?options") {
-		var serverUrl = GM_getValue("serverurl", "");
+		var serverUrl = GM.getValue("serverurl", "");
 
 		if(location.search == "?options" || !serverUrl) {
-			var error = GM_getValue("errormsg");
+			var error = GM.getValue("errormsg");
 
 			var $error = $('<p style="color: #c00"></p>');
 			if(error) {
 				$error.text(error);
-				GM_deleteValue("errormsg");
+				GM.deleteValue("errormsg");
 			}
 
 			var $serverurl = $('<p>2FA Server Base URL: <input type="text" size="100" placeholder="http://example.com/2fa/" style="padding: 3px; border-color: #222; color: #ccc" value="' + serverUrl + '" /></p>');
@@ -53,7 +58,7 @@ if(location.href.match(/mobileconf/)) {
 			$empty.html($error).append($serverurl).append($save);
 
 			$save.find('button').click(function() {
-				GM_setValue("serverurl", $serverurl.find('input').val());
+				GM.setValue("serverurl", $serverurl.find('input').val());
 				redirectToConf();
 			});
 		} else {
@@ -140,7 +145,7 @@ function getAccountName(callback) {
 }
 
 function getKey(tag, callback) {
-	var serverUrl = GM_getValue("serverurl");
+	var serverUrl = GM.getValue("serverurl");
 	
 	getAccountName(function(accountName) {
 		if(!accountName) {
@@ -148,7 +153,7 @@ function getKey(tag, callback) {
 			return;
 		}
 		
-		GM_xmlhttpRequest({
+		GM.xmlHttpRequest({
 			"method": "GET",
 			"url": serverUrl + "key/" + accountName + "/" + tag,
 			"onload": function(response) {
@@ -180,7 +185,7 @@ function getKey(tag, callback) {
 // Add auto-code-entering for logins
 (function() {
 	if(unsafeWindow.CLoginPromptManager) {
-		var serverUrl = GM_getValue("serverurl");
+		var serverUrl = GM.getValue("serverurl");
 		if(!serverUrl) {
 			return;
 		}
@@ -193,7 +198,7 @@ function getKey(tag, callback) {
 
 			var self = this;
 			var username = this.m_strUsernameEntered;
-			GM_xmlhttpRequest({
+			GM.xmlHttpRequest({
 				"method": "GET",
 				"url": serverUrl + "code/" + username,
 				"onload": function(response) {
