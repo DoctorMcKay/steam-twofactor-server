@@ -10,7 +10,7 @@
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     1.4.4
+// @version     1.4.5
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -21,6 +21,7 @@
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
 
+var $ = unsafeWindow.jQuery;
 var g_DeviceID = typeof unsafeWindow.g_steamID === 'string' ? encodeURIComponent("android:" +
 	hex_sha1(unsafeWindow.g_steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5')) : "";
 
