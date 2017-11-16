@@ -5,6 +5,7 @@
 // @include     https://steamcommunity.com/mobileconf/conf*
 // @include     https://steamcommunity.com/tradeoffer/*
 // @include     https://steamcommunity.com/login/*
+// @include     https://steamcommunity.com/openid/login*
 // @include     https://store.steampowered.com/login/*
 // @include     https://store.steampowered.com//login/*
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
@@ -21,7 +22,7 @@
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
 
-var $ = unsafeWindow.jQuery;
+var $ = jQuery;
 var g_DeviceID = typeof unsafeWindow.g_steamID === 'string' ? encodeURIComponent("android:" +
 	hex_sha1(unsafeWindow.g_steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5')) : "";
 
