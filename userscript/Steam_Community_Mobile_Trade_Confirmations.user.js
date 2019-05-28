@@ -8,10 +8,12 @@
 // @include     https://steamcommunity.com/openid/login*
 // @include     https://store.steampowered.com/login/*
 // @include     https://store.steampowered.com//login/*
+// @include     https://partner.steamgames.com/
+// @include     https://help.steampowered.com/en/wizard/Login*
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     1.4.6
+// @version     1.4.7
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -31,7 +33,7 @@ function error(msg) {
 	location.href = "/mobileconf/conf?options";
 }
 
-if(location.href.match(/mobileconf/)) {
+if (location.href.match(/mobileconf/)) {
 	unsafeWindow.SGHandler = cloneInto({"getResultStatus": function() { return "busy"; }, "getResultValue": function() { return ""; }}, unsafeWindow, {"cloneFunctions": true});
 	unsafeWindow.GetValueFromLocalURL = exportFunction(function(url, timeout, success, error, fatal) {
 		GM.getValue("serverurl").then(function(serverUrl) {
@@ -48,7 +50,7 @@ if(location.href.match(/mobileconf/)) {
 			if (location.search == "?options" || !serverUrl) {
 				GM.getValue("errormsg").then(function(error) {
 					var $error = $('<p style="color: #c00"></p>');
-					if(error) {
+					if (error) {
 						$error.text(error);
 						GM.deleteValue("errormsg");
 					}
@@ -108,19 +110,19 @@ function doAcceptAll(failures) {
 	}
 }
 
-if(location.href.match(/tradeoffer/)) {
+if (location.href.match(/tradeoffer/)) {
 	var originalShowAlertDialog = unsafeWindow.ShowAlertDialog;
 	unsafeWindow.ShowAlertDialog = exportFunction(function(title, msg) {
 		originalShowAlertDialog(title, msg);
 		
-		if(msg.match(/verify it in your Steam Mobile app/)) {
+		if (msg.match(/verify it in your Steam Mobile app/)) {
 			redirectToConf(true);
 		}
 	}, unsafeWindow);
 }
 
 function redirectToConf(suppressDialog) {
-	if(!suppressDialog) {
+	if (!suppressDialog) {
 		unsafeWindow.ShowBlockingWaitDialog('Loading...', 'Loading your confirmations...');
 	}
 	
@@ -131,7 +133,7 @@ function redirectToConf(suppressDialog) {
 
 function getAccountName(callback) {
 	var accountName  = $('#account_pulldown').text().trim();
-	if(accountName) {
+	if (accountName) {
 		callback(accountName);
 		return;
 	}
@@ -139,7 +141,7 @@ function getAccountName(callback) {
 	// It's not on this page
 	$.get('/', function(html) {
 		accountName = html.match(/<span [^>]*id="account_pulldown"[^>]*>([^<]+)<\/span>/);
-		if(!accountName) {
+		if (!accountName) {
 			callback(null);
 		} else {
 			callback(accountName[1].trim());
@@ -150,7 +152,7 @@ function getAccountName(callback) {
 function getKey(tag, callback) {
 	GM.getValue("serverurl").then(function(serverUrl) {
 		getAccountName(function(accountName) {
-			if(!accountName) {
+			if (!accountName) {
 				error("We couldn't get your account name.");
 				return;
 			}
@@ -159,13 +161,13 @@ function getKey(tag, callback) {
 				"method": "GET",
 				"url": serverUrl + "key/" + accountName + "/" + tag,
 				"onload": function(response) {
-					if(!response.responseText) {
+					if (!response.responseText) {
 						error("There was an unknown error when requesting a key.");
 						return;
 					}
 
 					var errMatch = response.responseText.match(/<h1>[^<]+<\/h1>([^\n]+)/);
-					if(errMatch) {
+					if (errMatch) {
 						error(errMatch[1]);
 						return;
 					}
@@ -186,10 +188,10 @@ function getKey(tag, callback) {
 }
 
 // Add auto-code-entering for logins
-(function() {
-	if(unsafeWindow.CLoginPromptManager) {
+unsafeWindow.addEventListener('load', function() {
+	if (unsafeWindow.CLoginPromptManager) {
 		GM.getValue("serverurl").then(function(serverUrl) {
-			if(!serverUrl) {
+			if (!serverUrl) {
 				return;
 			}
 
@@ -205,7 +207,7 @@ function getKey(tag, callback) {
 					"method": "GET",
 					"url": serverUrl + "code/" + username,
 					"onload": function(response) {
-						if(!response.responseText || response.responseText.length != 5) {
+						if (!response.responseText || response.responseText.length != 5) {
 							return;
 						}
 						
@@ -216,4 +218,4 @@ function getKey(tag, callback) {
 			}, unsafeWindow);
 		});
 	}
-})();
+});
