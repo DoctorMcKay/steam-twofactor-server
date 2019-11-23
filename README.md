@@ -3,7 +3,7 @@
 This is a node.js web server that returns Steam two-factor login codes for use in login and mobile trade confirmation.
 
 You could maybe use this to separate your secrets from your accounts, or to make it easier to get codes for your
-alternate accounts. You should use the app for any account with significant value.
+alternate accounts. You should use the official Steam app for any account with significant value.
 
 There is no logging as of yet. It just prints messages to stdout. You could use `forever` to redirect these into a file.
 You could also use `forever` to run it as a daemon.
