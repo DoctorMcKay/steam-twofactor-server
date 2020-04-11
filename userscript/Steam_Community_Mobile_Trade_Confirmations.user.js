@@ -82,7 +82,7 @@ if (location.href.match(/mobileconf/)) {
 	}
 }
 
-function doAcceptAll(failures) {
+function doAcceptAll() {
 	var $confs = $('.mobileconf_list_entry');
 	
 	if ($confs.length == 0) {
@@ -90,24 +90,22 @@ function doAcceptAll(failures) {
 		return;
 	}
 	
-	var modal = unsafeWindow.ShowBlockingWaitDialog("Accepting Confirmations...", $confs.length + " confirmation" + ($confs.length == 1 ? '' : 's') + " remaining..." + (failures ? '<br />' + failures + ' failure' + (failures == 1 ? '' : 's') : ''));
-	var $conf = $($confs[0]);
+	var modal = unsafeWindow.ShowBlockingWaitDialog("Accepting Confirmations...", $confs.length + " confirmation" + ($confs.length == 1 ? '' : 's'));
 	
-	unsafeWindow.SendMobileConfirmationOp("allow", $conf.data('confid'), $conf.data('key'), exportFunction(function() {
-		// success
-		confDone();
-	}, unsafeWindow), exportFunction(function() {
-		// error
-		failures = failures || 0;
-		failures++;
-		confDone();
-	}, unsafeWindow));
-	
-	function confDone() {
-		unsafeWindow.RemoveConfirmationFromList($conf.data('confid'));
-		modal.Dismiss();
-		doAcceptAll(failures);
-	}
+	var confids = $confs.map((itemNum) => {
+		return $($confs[itemNum]).data('confid')
+	})
+
+	var keys = $confs.map((itemNum) => {
+		return $($confs[itemNum]).data('key')
+	})
+
+	unsafeWindow.SendMultiMobileConfirmationOp("allow", confids, keys, exportFunction(function() {
+		location.reload();
+		return;
+	}), exportFunction(function() {
+		alert("Error on bulk-accepting confirmations");
+	}));
 }
 
 if (location.href.match(/tradeoffer/)) {
