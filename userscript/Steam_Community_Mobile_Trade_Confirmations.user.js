@@ -13,7 +13,7 @@
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     1.4.8
+// @version     1.5.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -73,11 +73,23 @@ if (location.href.match(/mobileconf/)) {
 		$('#mobileconf_empty').append('<div style="margin-top: 20px"><a href="/mobileconf/conf?options" style="text-decoration: underline">Change 2FA Server URL</a></div>');
 		
 		if ($('.mobileconf_list_entry').length > 0) {
-			var $acceptAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px 50px"><span>Accept All</span></a>');
-			$('.responsive_page_template_content').prepend($acceptAll);
+			var $acceptAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px 0 10px 50px"><span>Accept All</span></a>');
+            var $checkAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px"><span>Select All</span></a>');
+
+            if ($('input[type=checkbox][id^=multiconf_]').length > 0) {
+                $('.responsive_page_template_content').prepend($checkAll);
+            }
+
+            if ($('.mobileconf_list_entry').length > 0) {
+                $('.responsive_page_template_content').prepend($acceptAll);
+            }
+
 			$acceptAll.click(function() {
 				doAcceptAll();
 			});
+            $checkAll.click(function() {
+                $('input[type=checkbox][id^=multiconf_]').click();
+            });
 		}
 	}
 }
