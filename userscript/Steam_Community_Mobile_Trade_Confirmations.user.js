@@ -2,18 +2,18 @@
 // @name        Steam Community Mobile Trade Confirmations
 // @namespace   www.doctormckay.com
 // @description Enables mobile trade confirmations in the web browser
-// @include     https://steamcommunity.com/mobileconf/conf*
-// @include     https://steamcommunity.com/tradeoffer/*
-// @include     https://steamcommunity.com/login/*
-// @include     https://steamcommunity.com/openid/login*
-// @include     https://store.steampowered.com/login/*
-// @include     https://store.steampowered.com//login/*
-// @include     https://partner.steamgames.com/
-// @include     https://help.steampowered.com/en/wizard/Login*
+// @match       https://steamcommunity.com/mobileconf/conf*
+// @match       https://steamcommunity.com/tradeoffer/*
+// @match       https://steamcommunity.com/login/*
+// @match       https://steamcommunity.com/openid/login*
+// @match       https://store.steampowered.com/login/*
+// @match       https://store.steampowered.com//login/*
+// @match       https://partner.steamgames.com/
+// @match       https://help.steampowered.com/en/wizard/Login*
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     1.5.0
+// @version     1.6.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -74,22 +74,22 @@ if (location.href.match(/mobileconf/)) {
 		
 		if ($('.mobileconf_list_entry').length > 0) {
 			var $acceptAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px 0 10px 50px"><span>Accept All</span></a>');
-            var $checkAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px"><span>Select All</span></a>');
+			var $checkAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px"><span>Select All</span></a>');
 
-            if ($('input[type=checkbox][id^=multiconf_]').length > 0) {
-                $('.responsive_page_template_content').prepend($checkAll);
-            }
+			if ($('input[type=checkbox][id^=multiconf_]').length > 0) {
+				$('.responsive_page_template_content').prepend($checkAll);
+			}
 
-            if ($('.mobileconf_list_entry').length > 0) {
-                $('.responsive_page_template_content').prepend($acceptAll);
-            }
+			if ($('.mobileconf_list_entry').length > 0) {
+				$('.responsive_page_template_content').prepend($acceptAll);
+			}
 
 			$acceptAll.click(function() {
 				doAcceptAll();
 			});
-            $checkAll.click(function() {
-                $('input[type=checkbox][id^=multiconf_]').click();
-            });
+			$checkAll.click(function() {
+				$('input[type=checkbox][id^=multiconf_]').click();
+			});
 		}
 	}
 }
@@ -201,33 +201,37 @@ function getKey(tag, callback) {
 
 // Add auto-code-entering for logins
 unsafeWindow.addEventListener('load', function() {
-	if (unsafeWindow.CLoginPromptManager) {
-		GM.getValue("serverurl").then(function(serverUrl) {
-			if (!serverUrl) {
-				return;
-			}
+	if (!location.pathname.startsWith('/login') && !location.pathname.match(/^\/([^\/]+)\/wizard\/Login/)) {
+		return;
+	}
 
-			var proto = unsafeWindow.CLoginPromptManager.prototype;
+	GM.getValue("serverurl").then(function(serverUrl) {
+		if (!serverUrl) {
+			return;
+		}
 
-			var originalStartTwoFactorAuthProcess = proto.StartTwoFactorAuthProcess;
-			proto.StartTwoFactorAuthProcess = exportFunction(function() {
-				originalStartTwoFactorAuthProcess.call(this);
+		var interval = setInterval(function() {
+			var inputs = document.querySelectorAll('[class^=newlogindialog_SegmentedCharacterInput] input');
+			var accountNameElement = document.querySelector('[class^=newlogindialog_AccountName]');
+			if (inputs.length > 0 && accountNameElement && accountNameElement.textContent.trim().length > 0) {
+				clearInterval(interval);
 
-				var self = this;
-				var username = this.m_strUsernameEntered;
 				GM.xmlHttpRequest({
 					"method": "GET",
-					"url": serverUrl + "code/" + username,
+					"url": serverUrl + "code/" + accountNameElement.textContent.trim(),
 					"onload": function(response) {
 						if (!response.responseText || response.responseText.length != 5) {
 							return;
 						}
-						
-						document.getElementById('twofactorcode_entry').value = response.responseText;
-						proto.SubmitTwoFactorCode.call(self);
+
+						var dt = new DataTransfer();
+						dt.setData('Text', response.responseText);
+						var evt = new ClipboardEvent('paste', {clipboardData: dt, bubbles: true});
+
+						inputs[0].dispatchEvent(evt);
 					}
 				});
-			}, unsafeWindow);
+			}
 		});
-	}
+	});
 });
