@@ -201,7 +201,7 @@ function getKey(tag, callback) {
 
 // Add auto-code-entering for logins
 unsafeWindow.addEventListener('load', function() {
-	if (!location.pathname.startsWith('/login') && !location.pathname.match(/^\/([^\/]+)\/wizard\/Login/)) {
+	if (!location.pathname.startsWith('/login') && !location.pathname.match(/^\/([^\/]+)\/wizard\/Login/) && location.hostname != 'partner.steamgames.com') {
 		return;
 	}
 
