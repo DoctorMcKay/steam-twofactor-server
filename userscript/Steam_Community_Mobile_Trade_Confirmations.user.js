@@ -13,7 +13,7 @@
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     1.6.2
+// @version     1.6.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -237,38 +237,38 @@ unsafeWindow.addEventListener('load', function() {
 					}
 				});
 			}
+		}, 100);
+		
+		// Also handle legacy login prompts, still used on some pages like /openid/login
+		if (unsafeWindow.CLoginPromptManager) {
+			var proto = unsafeWindow.CLoginPromptManager.prototype;
+			var codeSubmitted = false;
 
-            // Also handle legacy login prompts, still used on some pages like /openid/login
-            if (unsafeWindow.CLoginPromptManager) {
-                var proto = unsafeWindow.CLoginPromptManager.prototype;
-                var codeSubmitted = false;
+			var originalStartTwoFactorAuthProcess = proto.StartTwoFactorAuthProcess;
+			proto.StartTwoFactorAuthProcess = exportFunction(function() {
+				originalStartTwoFactorAuthProcess.call(this);
 
-                var originalStartTwoFactorAuthProcess = proto.StartTwoFactorAuthProcess;
-                proto.StartTwoFactorAuthProcess = exportFunction(function() {
-                    originalStartTwoFactorAuthProcess.call(this);
+				if (codeSubmitted) {
+					// If we already submitted a code, bail early to avoid a loop if the code was wrong
+					return;
+				}
 
-                    if (codeSubmitted) {
-                        // If we already submitted a code, bail early to avoid a loop if the code was wrong
-                        return;
-                    }
+				var self = this;
+				var username = this.m_strUsernameEntered;
+				GM.xmlHttpRequest({
+					method: 'GET',
+					url: serverUrl + 'code/' + username,
+					onload: function(response) {
+						if (!response.responseText || response.responseText.length != 5) {
+							return;
+						}
 
-                    var self = this;
-                    var username = this.m_strUsernameEntered;
-                    GM.xmlHttpRequest({
-                        method: 'GET',
-                        url: serverUrl + 'code/' + username,
-                        onload: function(response) {
-                            if (!response.responseText || response.responseText.length != 5) {
-                                return;
-                            }
-
-                            document.getElementById('twofactorcode_entry').value = response.responseText;
-                            codeSubmitted = true;
-                            proto.SubmitTwoFactorCode.call(self);
-                        }
-                    });
-                }, unsafeWindow);
-            }
-		});
+						document.getElementById('twofactorcode_entry').value = response.responseText;
+						codeSubmitted = true;
+						proto.SubmitTwoFactorCode.call(self);
+					}
+				});
+			}, unsafeWindow);
+		}
 	});
 });
