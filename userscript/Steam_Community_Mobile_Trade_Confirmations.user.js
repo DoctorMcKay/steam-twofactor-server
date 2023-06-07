@@ -13,7 +13,7 @@
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     1.6.3
+// @version     1.6.4
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -71,7 +71,7 @@ if (location.href.match(/mobileconf/)) {
 		});
 	} else {
 		$('#mobileconf_empty').append('<div style="margin-top: 20px"><a href="/mobileconf/conf?options" style="text-decoration: underline">Change 2FA Server URL</a></div>');
-		
+
 		if ($('.mobileconf_list_entry').length > 0) {
 			var $acceptAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px 0 10px 50px"><span>Accept All</span></a>');
 			var $checkAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px"><span>Select All</span></a>');
@@ -96,15 +96,15 @@ if (location.href.match(/mobileconf/)) {
 
 function doAcceptAll(failures) {
 	var $confs = $('.mobileconf_list_entry');
-	
+
 	if ($confs.length == 0) {
 		location.reload();
 		return;
 	}
-	
+
 	var modal = unsafeWindow.ShowBlockingWaitDialog("Accepting Confirmations...", $confs.length + " confirmation" + ($confs.length == 1 ? '' : 's') + " remaining..." + (failures ? '<br />' + failures + ' failure' + (failures == 1 ? '' : 's') : ''));
 	var $conf = $($confs[0]);
-	
+
 	unsafeWindow.SendMobileConfirmationOp("allow", $conf.data('confid'), $conf.data('key'), exportFunction(function() {
 		// success
 		confDone();
@@ -114,7 +114,7 @@ function doAcceptAll(failures) {
 		failures++;
 		confDone();
 	}, unsafeWindow));
-	
+
 	function confDone() {
 		unsafeWindow.RemoveConfirmationFromList($conf.data('confid'));
 		modal.Dismiss();
@@ -126,7 +126,7 @@ if (location.href.match(/tradeoffer/)) {
 	var originalShowAlertDialog = unsafeWindow.ShowAlertDialog;
 	unsafeWindow.ShowAlertDialog = exportFunction(function(title, msg) {
 		originalShowAlertDialog(title, msg);
-		
+
 		if (msg.match(/verify it in your Steam Mobile app/)) {
 			redirectToConf(true);
 		}
@@ -137,7 +137,7 @@ function redirectToConf(suppressDialog) {
 	if (!suppressDialog) {
 		unsafeWindow.ShowBlockingWaitDialog('Loading...', 'Loading your confirmations...');
 	}
-	
+
 	getKey("conf", function(time, key) {
 		location.href = "/mobileconf/conf?p=" + g_DeviceID + "&a=" + unsafeWindow.g_steamID + "&k=" + encodeURIComponent(key) + "&t=" + time + "&m=android&tag=conf";
 	});
@@ -149,7 +149,7 @@ function getAccountName(callback) {
 		callback(accountName);
 		return;
 	}
-	
+
 	// It's not on this page
 	$.get('/', function(html) {
 		accountName = html.match(/<span [^>]*class="persona online"[^>]*>([^<]+)<\/span>/);
@@ -168,7 +168,7 @@ function getKey(tag, callback) {
 				error("We couldn't get your account name.");
 				return;
 			}
-			
+
 			GM.xmlHttpRequest({
 				"method": "GET",
 				"url": serverUrl + "key/" + accountName + "/" + tag,
@@ -216,7 +216,7 @@ unsafeWindow.addEventListener('load', function() {
 		}
 
 		var interval = setInterval(function() {
-			var inputs = document.querySelectorAll('[class^=newlogindialog_SegmentedCharacterInput] input');
+			var inputs = document.querySelectorAll('[class^=newlogindialog_ConfirmationEntryContainer] [class^=segmentedinputs_SegmentedCharacterInput] input');
 			var accountNameElement = document.querySelector('[class^=newlogindialog_AccountName]');
 			if (inputs.length > 0 && accountNameElement && accountNameElement.textContent.trim().length > 0) {
 				clearInterval(interval);
@@ -238,7 +238,7 @@ unsafeWindow.addEventListener('load', function() {
 				});
 			}
 		}, 100);
-		
+
 		// Also handle legacy login prompts, still used on some pages like /openid/login
 		if (unsafeWindow.CLoginPromptManager) {
 			var proto = unsafeWindow.CLoginPromptManager.prototype;
