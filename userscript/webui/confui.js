@@ -8,7 +8,12 @@ async function checkInit() {
 		if (++g_CheckInitAttempts < 20) {
 			// Give the userscript some time to inject and run
 			setTimeout(checkInit, 100);
+			return;
 		}
+
+		// Userscript is not present
+		$('.view').hide();
+		$('#fatal-error-view').show();
 		return;
 	}
 

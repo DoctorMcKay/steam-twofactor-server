@@ -8,12 +8,21 @@ body {
     padding-top: 10px;
 }
 
+a {
+    color: #c4c4c4;
+}
+
 #loader-view, #confs-loading {
     text-align: center;
 }
 
 #main-app-view, #fatal-error-view, #no-confs-msg {
     display: none;
+}
+
+#fatal-error-view {
+    font-size: 24px;
+    font-weight: 300;
 }
 
 .loader-cube {
