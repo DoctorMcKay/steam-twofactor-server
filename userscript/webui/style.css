@@ -1,3 +1,163 @@
 body {
-    font-family: sans-serif;
+    font-family: 'Roboto', sans-serif;
+    background-color: #1b2838;
+    color: #c4c4c4;
+
+    text-align: center;
+
+    padding-top: 10px;
+}
+
+#loader-view, #confs-loading {
+    text-align: center;
+}
+
+#main-app-view, #fatal-error-view, #no-confs-msg {
+    display: none;
+}
+
+.loader-cube {
+    animation: loaderCube infinite ease-in-out 1s;
+    width: 30px;
+    height: 30px;
+    background-color: #c4c4c4;
+    margin: auto;
+}
+
+@keyframes loaderCube {
+    0% {
+        transform: rotate(45deg);
+        border-radius: 20px;
+    }
+
+    30% { border-radius: 0; }
+    70% { border-radius: 0; }
+
+    100% {
+        transform: rotate(405deg);
+        border-radius: 20px;
+    }
+}
+
+button {
+    border: 0;
+    background-color: #c4c4c411;
+    cursor: pointer;
+
+    color: #c4c4c4;
+    padding: 5px 10px;
+}
+
+button:hover, button:active {
+    background-color: #c4c4c433;
+}
+
+p {
+    margin: 0;
+}
+
+#account-info {
+    margin-bottom: 50px;
+}
+
+#refresh-btn {
+    margin-top: 5px;
+}
+
+#no-confs-msg {
+    font-weight: 300;
+    font-size: 24px;
+}
+
+.confirmation {
+    border-radius: 5px;
+    background-color: #c4c4c411;
+
+    margin: 0 auto 5px;
+
+    height: 74px;
+    max-width: 750px;
+
+    position: relative;
+}
+
+.confirmation .loader-cube {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+
+    display: none;
+}
+
+.confirmation.loading .loader-cube {
+    display: block;
+}
+
+.confirmation.loading .action {
+    display: none;
+}
+
+.confirmation .icon {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+
+    width: 64px;
+    height: 64px;
+}
+
+.confirmation .type-desc {
+    position: absolute;
+    bottom: 5px;
+    right: 143px;
+
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 300;
+    opacity: 0.3;
+}
+
+.confirmation .headline {
+    position: absolute;
+    top: 5px;
+    left: 74px;
+
+    font-weight: 500;
+    font-size: 20px;
+}
+
+.confirmation .summary {
+    position: absolute;
+    top: 31px;
+    left: 74px;
+
+    font-weight: 300;
+    font-size: 16px;
+
+    text-align: left;
+}
+
+.confirmation .action {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+}
+
+.confirmation .accept {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+
+    font-size: 36px;
+    color: #0f0;
+}
+
+.confirmation .cancel {
+    position: absolute;
+    top: 5px;
+    right: 74px;
+
+    font-size: 64px;
+    line-height: 64px;
+    color: #f00;
 }

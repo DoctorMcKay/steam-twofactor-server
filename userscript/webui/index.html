@@ -1,10 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Hello, world!</title>
+		<title>Steam Community Mobile Confirmations</title>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
 		<link rel="stylesheet" href="style.css" />
+
+		<script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+		<script src="confui.js" async defer></script>
 	</head>
 	<body>
-		Hello, world!
+		<div id="loader-view" class="view">
+			<h1>Loading</h1>
+			<div class="loader-cube"></div>
+		</div>
+
+		<div id="fatal-error-view" class="view">
+			You must install the
+			<a href="https://github.com/DoctorMcKay/steam-twofactor-server/tree/master/userscript">user script</a>
+			before you can use this page.
+		</div>
+
+		<div id="main-app-view" class="view">
+			<div id="account-info">
+				<p>Signed in as: <span id="account-name"></span></p>
+				<button type="button" id="refresh-btn">Refresh Confirmations</button>
+			</div>
+
+			<div id="no-confs-msg">You don't have anything to confirm right now.</div>
+			<div id="confs-container"></div>
+		</div>
 	</body>
 </html>
