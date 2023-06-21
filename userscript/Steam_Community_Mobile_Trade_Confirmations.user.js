@@ -2,7 +2,8 @@
 // @name        Steam Community Mobile Trade Confirmations
 // @namespace   www.doctormckay.com
 // @description Enables mobile trade confirmations in the web browser
-// @match       https://steamcommunity.com/mobileconf/conf*
+// @match       https://doctormckay.github.io/steam-twofactor-server/*
+// @match       https://steamcommunity.com/mobileconf/*
 // @match       https://steamcommunity.com/tradeoffer/*
 // @match       https://steamcommunity.com/login/*
 // @match       https://steamcommunity.com/openid/login*
@@ -11,9 +12,8 @@
 // @match       https://partner.steamgames.com/
 // @match       https://help.steampowered.com/en/wizard/Login*
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
-// @require     https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     1.6.4
+// @version     2.0.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -24,102 +24,139 @@
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
 
-var $ = jQuery;
-var g_DeviceID = typeof unsafeWindow.g_steamID === 'string' ? encodeURIComponent("android:" +
-	hex_sha1(unsafeWindow.g_steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5')) : "";
+let g_PageIsConfirmationUI = location.href.startsWith('https://doctormckay.github.io/steam-twofactor-server');
+let g_AccountDetails = null;
 
-function error(msg) {
-	GM.setValue("errormsg", msg);
-	location.href = "/mobileconf/conf?options";
-}
+if (g_PageIsConfirmationUI) {
+	unsafeWindow.UserScriptInjected = {
+		getServerUrl() {
+			return GM.getValue('serverurl');
+		},
 
-if (location.href.match(/mobileconf/)) {
-	unsafeWindow.SGHandler = cloneInto({"getResultStatus": function() { return "busy"; }, "getResultValue": function() { return ""; }}, unsafeWindow, {"cloneFunctions": true});
-	unsafeWindow.GetValueFromLocalURL = exportFunction(function(url, timeout, success, error, fatal) {
-		GM.getValue("serverurl").then(function(serverUrl) {
-			var accountName = $('#account_pulldown').text().trim();
+		setServerUrl(serverUrl) {
+			return GM.setValue('serverurl', serverurl);
+		},
 
-			getKey("allow", function(time, key) {
-				success("p=" + g_DeviceID + "&a=" + unsafeWindow.g_steamID + "&k=" + encodeURIComponent(key) + "&t=" + time + "&m=android&tag=allow");
-			});
-		});
-	}, unsafeWindow);
+		getLoggedInAccountDetails() {
+			return getAccountDetails();
+		},
 
-	if (!location.search || location.search == "?options") {
-		GM.getValue("serverurl", "").then(function(serverUrl) {
-			if (location.search == "?options" || !serverUrl) {
-				GM.getValue("errormsg").then(function(error) {
-					var $error = $('<p style="color: #c00"></p>');
-					if (error) {
-						$error.text(error);
-						GM.deleteValue("errormsg");
+		getConfirmationList() {
+			return new Promise(async (resolve, reject) => {
+				try {
+					let serverUrl = await GM.getValue('serverurl');
+					if (!serverUrl) {
+						return reject(new Error('No 2FA server URL configured'));
 					}
 
-					var $serverurl = $('<p>2FA Server Base URL: <input type="text" size="100" placeholder="http://example.com/2fa/" style="padding: 3px; border-color: #222; color: #ccc" value="' + serverUrl + '" /></p>');
-					var $save = $('<p><button type="button" id="gm_save">Save</button></p>');
-					var $empty = $('#mobileconf_empty');
-					$empty.html($error).append($serverurl).append($save);
+					let query = await getOpQueryString('list');
+					let result = await gmGet('https://steamcommunity.com/mobileconf/getlist?' + query);
+					try {
+						result = JSON.parse(result.responseText);
+					} catch (ex) {
+						return reject(new Error('No valid response received from Steam for confirmation list.'));
+					}
 
-					$save.find('button').click(function() {
-						GM.setValue("serverurl", $serverurl.find('input').val());
-						redirectToConf();
-					});
-				});
-			} else {
-				redirectToConf();
-			}
-		});
-	} else {
-		$('#mobileconf_empty').append('<div style="margin-top: 20px"><a href="/mobileconf/conf?options" style="text-decoration: underline">Change 2FA Server URL</a></div>');
-
-		if ($('.mobileconf_list_entry').length > 0) {
-			var $acceptAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px 0 10px 50px"><span>Accept All</span></a>');
-			var $checkAll = $('<a class="btn_darkblue_white_innerfade btn_medium" href="#" style="margin: 10px"><span>Select All</span></a>');
-
-			if ($('input[type=checkbox][id^=multiconf_]').length > 0) {
-				$('.responsive_page_template_content').prepend($checkAll);
-			}
-
-			if ($('.mobileconf_list_entry').length > 0) {
-				$('.responsive_page_template_content').prepend($acceptAll);
-			}
-
-			$acceptAll.click(function() {
-				doAcceptAll();
+					resolve(result);
+				} catch (ex) {
+					reject(ex);
+				}
 			});
-			$checkAll.click(function() {
-				$('input[type=checkbox][id^=multiconf_]').click();
+		},
+
+		respondToConfirmation(confId, confKey, accept) {
+			return new Promise(async (resolve, reject) => {
+				try {
+					let keyTag = accept ? 'accept' : 'reject';
+					let op = accept ? 'allow' : 'cancel';
+
+					let query = await getOpQueryString(keyTag, {
+						op,
+						cid: confId,
+						ck: confKey
+					});
+
+					let result = await gmGet('https://steamcommunity.com/mobileconf/ajaxop?' + query);
+					if (!result.responseText) {
+						return reject(new Error('Invalid response received from Steam'));
+					}
+
+					try {
+						result = JSON.parse(result.responseText);
+					} catch (ex) {
+						return reject(new Error('Malformed response received from Steam'));
+					}
+
+					resolve(result);
+				} catch (ex) {
+					reject(ex);
+				}
 			});
 		}
-	}
+	};
 }
 
-function doAcceptAll(failures) {
-	var $confs = $('.mobileconf_list_entry');
+function getOpQueryString(keyTag, params) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			let {steamID, accountName} = await getAccountDetails();
+			let {time, key} = await getKey(keyTag);
 
-	if ($confs.length == 0) {
-		location.reload();
-		return;
-	}
+			let deviceId = 'android:' + hex_sha1(steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5');
 
-	var modal = unsafeWindow.ShowBlockingWaitDialog("Accepting Confirmations...", $confs.length + " confirmation" + ($confs.length == 1 ? '' : 's') + " remaining..." + (failures ? '<br />' + failures + ' failure' + (failures == 1 ? '' : 's') : ''));
-	var $conf = $($confs[0]);
+			let qsParams = {
+				p: deviceId,
+				a: steamID,
+				k: key,
+				t: time,
+				m: 'react',
+				tag: keyTag,
+				...(params || {})
+			};
 
-	unsafeWindow.SendMobileConfirmationOp("allow", $conf.data('confid'), $conf.data('key'), exportFunction(function() {
-		// success
-		confDone();
-	}, unsafeWindow), exportFunction(function() {
-		// error
-		failures = failures || 0;
-		failures++;
-		confDone();
-	}, unsafeWindow));
+			resolve(Object.keys(qsParams).map(i => `${i}=${encodeURIComponent(qsParams[i])}`).join('&'));
+		} catch (ex) {
+			reject(ex);
+		}
+	});
+}
 
-	function confDone() {
-		unsafeWindow.RemoveConfirmationFromList($conf.data('confid'));
-		modal.Dismiss();
-		doAcceptAll(failures);
-	}
+function gmGet(url) {
+	return new Promise((resolve, reject) => {
+		GM.xmlHttpRequest({
+			method: 'GET',
+			url,
+			onload: resolve,
+			onerror: (res) => reject(new Error(`HTTP error ${res.status}`))
+		});
+	});
+}
+
+function getAccountDetails() {
+	return new Promise(async (resolve, reject) => {
+		if (g_AccountDetails) {
+			return resolve(g_AccountDetails);
+		}
+
+		try {
+			let result = await gmGet('https://steamcommunity.com');
+
+			let steamId = result.responseText.match(/g_steamID = "(\d+)";/);
+			let accountName = result.responseText.match(/<span class="[^"]*persona[^"]*">([^<]+)<\/span>/);
+			if (!steamId || !accountName) {
+				return resolve(null);
+			}
+
+			g_AccountDetails = {
+				steamID: steamId[1],
+				accountName: accountName[1]
+			};
+
+			resolve(g_AccountDetails);
+		} catch (ex) {
+			reject(ex);
+		}
+	});
 }
 
 if (location.href.match(/tradeoffer/)) {
@@ -128,85 +165,61 @@ if (location.href.match(/tradeoffer/)) {
 		originalShowAlertDialog(title, msg);
 
 		if (msg.match(/verify it in your Steam Mobile app/)) {
-			redirectToConf(true);
+			location.href = 'https://doctormckay.github.io/steam-twofactor-server/';
 		}
 	}, unsafeWindow);
 }
 
-function redirectToConf(suppressDialog) {
-	if (!suppressDialog) {
-		unsafeWindow.ShowBlockingWaitDialog('Loading...', 'Loading your confirmations...');
-	}
+function getKey(tag) {
+	return new Promise(async (resolve, reject) => {
+		let serverUrl, account;
 
-	getKey("conf", function(time, key) {
-		location.href = "/mobileconf/conf?p=" + g_DeviceID + "&a=" + unsafeWindow.g_steamID + "&k=" + encodeURIComponent(key) + "&t=" + time + "&m=android&tag=conf";
-	});
-}
-
-function getAccountName(callback) {
-	var accountName  = $('#account_dropdown .persona').text().trim();
-	if (accountName) {
-		callback(accountName);
-		return;
-	}
-
-	// It's not on this page
-	$.get('/', function(html) {
-		accountName = html.match(/<span [^>]*class="persona online"[^>]*>([^<]+)<\/span>/);
-		if (!accountName) {
-			callback(null);
-		} else {
-			callback(accountName[1].trim());
-		}
-	});
-}
-
-function getKey(tag, callback) {
-	GM.getValue("serverurl").then(function(serverUrl) {
-		getAccountName(function(accountName) {
-			if (!accountName) {
-				error("We couldn't get your account name.");
-				return;
+		try {
+			serverUrl = await GM.getValue('serverurl');
+			if (!serverUrl) {
+				return reject(new Error('No 2FA server URL configured'));
 			}
 
-			GM.xmlHttpRequest({
-				"method": "GET",
-				"url": serverUrl + "key/" + accountName + "/" + tag,
-				"onload": function(response) {
-					if (!response.responseText) {
-						error("There was an unknown error when requesting a key.");
-						return;
-					}
+			account = await getAccountDetails();
+			if (!account) {
+				return reject(new Error('Not logged in to steamcommunity.com'));
+			}
+		} catch (ex) {
+			reject(new Error(`Error from Steam: ${ex.message || ex}`));
+		}
 
-					var errMatch = response.responseText.match(/<h1>[^<]+<\/h1>([^\n]+)/);
-					if (errMatch) {
-						error(errMatch[1]);
-						return;
-					}
+		try {
+			let result = await gmGet(`${serverUrl}key/${account.accountName}/${tag}`);
+			if (!result.responseText) {
+				return reject(new Error('There was an unknown error when requesting a key from your 2FA server.'));
+			}
 
-					try {
-						var json = JSON.parse(response.responseText);
-						callback(json.time, json.key);
-					} catch(e) {
-						error("We got a malformed response from your 2FA server.");
-					}
-				},
-				"onerror": function(response) {
-					error("Error Code " + response.status + " from your 2FA server.");
-				}
-			});
-		});
+			let errMatch = result.responseText.match(/<h1>[^<]+<\/h1>([^\n]+)/);
+			if (errMatch) {
+				return reject(new Error(errMatch[1]));
+			}
+
+			try {
+				let json = JSON.parse(result.responseText);
+				return resolve(json);
+			} catch(e) {
+				return reject(new Error('We got a malformed response from your 2FA server.'));
+			}
+		} catch (ex) {
+			let err = ex.message || ex;
+			reject(new Error(`Error from your 2FA server: ${ex.message || ex}`));
+		}
 	});
 }
 
 // Add auto-code-entering for logins
 unsafeWindow.addEventListener('load', function() {
 	if (
-        !location.pathname.startsWith('/login') &&
-        !location.pathname.startsWith('/openid/login') &&
-        !location.pathname.match(/^\/([^\/]+)\/wizard\/Login/) &&
-        location.hostname != 'partner.steamgames.com'
-    ) {
+		!location.pathname.startsWith('/login') &&
+		!location.pathname.startsWith('/openid/login') &&
+		!location.pathname.match(/^\/([^\/]+)\/wizard\/Login/) &&
+		location.hostname != 'partner.steamgames.com'
+	) {
 		return;
 	}
 
