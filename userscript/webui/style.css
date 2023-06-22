@@ -16,7 +16,7 @@ a {
     text-align: center;
 }
 
-#main-app-view, #fatal-error-view, #no-confs-msg {
+#main-app-view, #fatal-error-view, #no-confs-msg, #configure-server-view {
     display: none;
 }
 
@@ -169,4 +169,35 @@ p {
     font-size: 64px;
     line-height: 64px;
     color: #f00;
+}
+
+/* Configure UI stuff */
+
+.configure-server-link {
+    display: block;
+    font-size: 14px;
+    margin-top: 50px;
+}
+
+#twofa-server-url {
+    font-size: 16px;
+
+    border: 0;
+    outline: 0;
+    padding: 5px;
+    background-color: #c4c4c411;
+    color: #c4c4c4;
+}
+
+#twofa-server-url:hover, #twofa-server-url:focus {
+    background-color: #c4c4c422;
+}
+
+#twofa-server-save-btn {
+    display: block;
+
+    margin: 10px auto;
+    padding: 5px 15px;
+
+    font-size: 20px;
 }

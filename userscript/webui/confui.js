@@ -4,6 +4,8 @@ let g_CheckInitAttempts = 0;
 
 checkInit();
 async function checkInit() {
+	loading('Loading');
+
 	if (!window.UserScriptInjected) {
 		if (++g_CheckInitAttempts < 20) {
 			// Give the userscript some time to inject and run
@@ -14,6 +16,12 @@ async function checkInit() {
 		// Userscript is not present
 		$('.view').hide();
 		$('#fatal-error-view').show();
+		return;
+	}
+
+	let serverUrl = await UserScriptInjected.getServerUrl();
+	if (!serverUrl) {
+		showConfigView();
 		return;
 	}
 
@@ -149,6 +157,35 @@ function fatalError(message) {
 	$('.view').hide();
 
 	let $fatalView = $('#fatal-error-view');
-	$fatalView.text(message);
+	$fatalView.find('#fatal-error-msg').text(message);
 	$fatalView.show();
 }
+
+// Configure UI stuff
+
+$('.configure-server-link').click(function(e) {
+	e.preventDefault();
+	showConfigView();
+});
+
+async function showConfigView() {
+	loading('Loading');
+
+	let serverUrl = await UserScriptInjected.getServerUrl();
+
+	$('.view').hide();
+	$('#configure-server-view').show();
+
+	$('#twofa-server-url').val(serverUrl);
+}
+
+$('#twofa-server-save-btn').click(async () => {
+	let newServerUrl = $('#twofa-server-url').val();
+	if (newServerUrl.length > 0 && !newServerUrl.endsWith('/')) {
+		newServerUrl += '/';
+	}
+
+	await UserScriptInjected.setServerUrl(newServerUrl);
+
+	checkInit();
+});

@@ -19,9 +19,12 @@
 		</div>
 
 		<div id="fatal-error-view" class="view">
-			You must install the
-			<a href="https://github.com/DoctorMcKay/steam-twofactor-server/tree/master/userscript">user script</a>
-			before you can use this page.
+			<span id="fatal-error-msg">
+				You must install the
+				<a href="https://github.com/DoctorMcKay/steam-twofactor-server/tree/master/userscript">user script</a>
+				before you can use this page.
+			</span>
+			<a href="#" class="configure-server-link">Change 2FA Server URL</a>
 		</div>
 
 		<div id="main-app-view" class="view">
@@ -32,6 +35,15 @@
 
 			<div id="no-confs-msg">You don't have anything to confirm right now.</div>
 			<div id="confs-container"></div>
+
+			<a href="#" class="configure-server-link">Change 2FA Server URL</a>
+		</div>
+
+		<div id="configure-server-view" class="view">
+			<label>2FA Server Base URL: </label>
+			<input type="text" size="64" placeholder="https://example.com/2fa/" id="twofa-server-url" />
+
+			<button type="button" id="twofa-server-save-btn">Save</button>
 		</div>
 	</body>
 </html>
