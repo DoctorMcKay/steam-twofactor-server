@@ -18,6 +18,10 @@ async function checkInit() {
 		// Userscript is not present
 		$('.view').hide();
 		$('#fatal-error-view').show();
+
+		// Only this once, we don't want to show the "Change 2FA Server URL" link on the error view
+		$('#fatal-error-view .configure-server-link').remove();
+
 		return;
 	}
 
