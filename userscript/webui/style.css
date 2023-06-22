@@ -26,7 +26,7 @@ a {
 }
 
 .loader-cube {
-    animation: loaderCube infinite ease-in-out 1s;
+    animation: loaderCube 1.8s cubic-bezier(0.75, 0, 0.5, 1) infinite;
     width: 30px;
     height: 30px;
     background-color: #c4c4c4;
@@ -34,17 +34,13 @@ a {
 }
 
 @keyframes loaderCube {
-    0% {
-        transform: rotate(45deg);
-        border-radius: 20px;
+    50% {
+        border-radius: 50%;
+        transform: scale(0.5) rotate(360deg);
     }
 
-    30% { border-radius: 0; }
-    70% { border-radius: 0; }
-
     100% {
-        transform: rotate(405deg);
-        border-radius: 20px;
+        transform: scale(1) rotate(720deg);
     }
 }
 
