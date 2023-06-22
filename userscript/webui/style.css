@@ -73,9 +73,27 @@ p {
     margin-top: 5px;
 }
 
+#accept-all-btn {
+    margin: 20px auto 0;
+    font-size: 24px;
+}
+
 #no-confs-msg {
     font-weight: 300;
     font-size: 24px;
+}
+
+#accept-all-btn, #no-confs-msg, #confs-container {
+    display: none;
+}
+
+#main-app-view.has-confirmations #accept-all-btn,
+#main-app-view.has-confirmations #confs-container {
+    display: block;
+}
+
+#main-app-view:not(.has-confirmations) #no-confs-msg {
+    display: block;
 }
 
 .confirmation {

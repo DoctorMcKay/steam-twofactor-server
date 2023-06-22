@@ -1,5 +1,7 @@
 let g_SteamAccountDetails = null;
 
+let g_RequestInFlight = false;
+let g_IsAutoConfirming = false;
 let g_CheckInitAttempts = 0;
 
 checkInit();
@@ -49,21 +51,20 @@ async function loadConfirmations() {
 			throw new Error(confsList.message || confsList.detail || 'Failed to load confirmations list');
 		}
 
+		let $mainAppView = $('#main-app-view');
+
 		$('#loader-view').hide();
-		$('#main-app-view').show();
+		$mainAppView.show();
 
 		let $confsContainer = $('#confs-container');
 		let $noConfsMsg = $('#no-confs-msg');
 
 		let confs = (confsList.conf || []);
+		$mainAppView[confs.length == 0 ? 'removeClass' : 'addClass']('has-confirmations');
 		if (confs.length == 0) {
-			$confsContainer.hide();
-			$noConfsMsg.show();
 			return;
 		}
 
-		$noConfsMsg.hide();
-		$confsContainer.show();
 		$confsContainer.html('');
 
 		confs.forEach((conf) => {
@@ -74,7 +75,10 @@ async function loadConfirmations() {
 			let removeConf = () => {
 				$conf.remove();
 				if ($confsContainer.find('.confirmation').length == 0) {
-					$noConfsMsg.show();
+					$('#main-app-view').removeClass('has-confirmations');
+				} else if (g_IsAutoConfirming) {
+					// start confirming the next one
+					$('#accept-all-btn').click();
 				}
 			};
 
@@ -94,18 +98,25 @@ async function loadConfirmations() {
 			$btnAccept.attr('title', accept);
 			$btnAccept.html('&#10004');
 			$btnAccept.click(async () => {
+				if (g_RequestInFlight) {
+					return;
+				}
+
 				try {
+					g_RequestInFlight = true;
 					$conf.addClass('loading');
 					let result = await UserScriptInjected.respondToConfirmation(id, nonce, true);
 					if (!result.success) {
 						throw new Error(result.message || result.detail || 'Could not act on confirmation');
 					}
 
+					g_RequestInFlight = false;
 					removeConf();
 				} catch (ex) {
 					// TODO use something other than alert()
 					alert(ex.message || ex);
 					$conf.removeClass('loading');
+					g_RequestInFlight = false;
 				}
 			});
 
@@ -113,18 +124,25 @@ async function loadConfirmations() {
 			$btnCancel.attr('title', cancel);
 			$btnCancel.html('&times;');
 			$btnCancel.click(async () => {
+				if (g_RequestInFlight) {
+					return;
+				}
+
 				try {
+					g_RequestInFlight = true;
 					$conf.addClass('loading');
 					let result = await UserScriptInjected.respondToConfirmation(id, nonce, false);
 					if (!result.success) {
 						throw new Error(result.message || result.detail || 'Could not act on confirmation');
 					}
 
+					g_RequestInFlight = false;
 					removeConf();
 				} catch (ex) {
 					// TODO use something other than alert()
 					alert(ex.message || ex);
 					$conf.removeClass('loading');
+					g_RequestInFlight = false;
 				}
 			});
 
@@ -144,6 +162,23 @@ async function loadConfirmations() {
 		fatalError('Error: ' + (ex.message || ex));
 	}
 }
+
+$('#accept-all-btn').click(() => {
+	if (g_RequestInFlight) {
+		return;
+	}
+
+	let $confsContainer = $('#confs-container');
+
+	if ($confsContainer.find('.confirmation').length == 0) {
+		// nothing to do here
+		g_IsAutoConfirming = false;
+		return;
+	}
+
+	g_IsAutoConfirming = true;
+	$confsContainer.find(':first-child').find('.accept').click();
+});
 
 function loading(message) {
 	$('.view').hide();
