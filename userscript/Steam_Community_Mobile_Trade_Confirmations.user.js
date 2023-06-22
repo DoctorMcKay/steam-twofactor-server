@@ -14,7 +14,8 @@
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
 // @connect     steamcommunity.com
-// @version     2.0.2
+// @connect     *
+// @version     2.0.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
