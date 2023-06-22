@@ -13,7 +13,7 @@
 // @match       https://help.steampowered.com/en/wizard/Login*
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
-// @version     2.0.0
+// @version     2.0.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -34,7 +34,7 @@ if (g_PageIsConfirmationUI) {
 		},
 
 		setServerUrl(serverUrl) {
-			return GM.setValue('serverurl', serverurl);
+			return GM.setValue('serverurl', serverUrl);
 		},
 
 		getLoggedInAccountDetails() {
