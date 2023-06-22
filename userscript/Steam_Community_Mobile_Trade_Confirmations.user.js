@@ -1,5 +1,6 @@
 // ==UserScript==
 // @name        Steam Community Mobile Trade Confirmations
+// @author      Dr. McKay
 // @namespace   www.doctormckay.com
 // @description Enables mobile trade confirmations in the web browser
 // @match       https://doctormckay.github.io/steam-twofactor-server/*
