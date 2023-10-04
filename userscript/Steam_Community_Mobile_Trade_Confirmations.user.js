@@ -16,7 +16,7 @@
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
 // @connect     steamcommunity.com
 // @connect     *
-// @version     2.0.3
+// @version     2.0.4
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
