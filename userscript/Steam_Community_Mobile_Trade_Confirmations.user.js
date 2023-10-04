@@ -145,7 +145,7 @@ function getAccountDetails() {
 			let result = await gmGet('https://steamcommunity.com');
 
 			let steamId = result.responseText.match(/g_steamID = "(\d+)";/);
-			let accountName = result.responseText.match(/<span class="[^"]*persona[^"]*">([^<]+)<\/span>/);
+			let accountName = result.responseText.match(/<span class="[^"]*account_name[^"]*">([^<]+)<\/span>/);
 			if (!steamId || !accountName) {
 				return resolve(null);
 			}
