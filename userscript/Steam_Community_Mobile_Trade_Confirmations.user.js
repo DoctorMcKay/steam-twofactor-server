@@ -16,7 +16,7 @@
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
 // @connect     steamcommunity.com
 // @connect     *
-// @version     2.0.4
+// @version     2.0.5
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -67,7 +67,7 @@ if (g_PageIsConfirmationUI) {
 			});
 		},
 
-		respondToConfirmation(confId, confKey, accept) {
+		respondToConfirmation(confId, confKey, accept, overrideTimestamp) {
 			return new Promise(async (resolve, reject) => {
 				try {
 					let keyTag = accept ? 'accept' : 'reject';
@@ -77,7 +77,7 @@ if (g_PageIsConfirmationUI) {
 						op,
 						cid: confId,
 						ck: confKey
-					});
+					}, overrideTimestamp);
 
 					let result = await gmGet('https://steamcommunity.com/mobileconf/ajaxop?' + query);
 					if (!result.responseText) {
@@ -99,11 +99,11 @@ if (g_PageIsConfirmationUI) {
 	};
 }
 
-function getOpQueryString(keyTag, params) {
+function getOpQueryString(keyTag, params, overrideTimestamp) {
 	return new Promise(async (resolve, reject) => {
 		try {
 			let {steamID, accountName} = await getAccountDetails();
-			let {time, key} = await getKey(keyTag);
+			let {time, key} = await getKey(keyTag, overrideTimestamp);
 
 			let deviceId = 'android:' + hex_sha1(steamID).replace(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$/, '$1-$2-$3-$4-$5');
 
@@ -173,7 +173,7 @@ if (location.href.match(/tradeoffer/)) {
 	}, unsafeWindow);
 }
 
-function getKey(tag) {
+function getKey(tag, overrideTimestamp) {
 	return new Promise(async (resolve, reject) => {
 		let serverUrl, account;
 
@@ -192,7 +192,8 @@ function getKey(tag) {
 		}
 
 		try {
-			let result = await gmGet(`${serverUrl}key/${account.accountName}/${tag}`);
+			let queryString = overrideTimestamp ? `?t=${overrideTimestamp}` : '';
+			let result = await gmGet(`${serverUrl}key/${account.accountName}/${tag}${queryString}`);
 			if (!result.responseText) {
 				return reject(new Error('There was an unknown error when requesting a key from your 2FA server.'));
 			}

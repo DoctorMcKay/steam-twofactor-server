@@ -2,6 +2,7 @@ let g_SteamAccountDetails = null;
 
 let g_RequestInFlight = false;
 let g_IsAutoConfirming = false;
+let g_UsedTimestamps = [];
 let g_CheckInitAttempts = 0;
 
 checkInit();
@@ -109,7 +110,19 @@ async function loadConfirmations() {
 				try {
 					g_RequestInFlight = true;
 					$conf.addClass('loading');
-					let result = await UserScriptInjected.respondToConfirmation(id, nonce, true);
+
+					let overrideTimestamp = null;
+					if (g_IsAutoConfirming) {
+						overrideTimestamp = Math.floor(Date.now() / 1000);
+
+						while (g_UsedTimestamps.includes(overrideTimestamp)) {
+							overrideTimestamp++;
+						}
+
+						g_UsedTimestamps.push(overrideTimestamp);
+					}
+
+					let result = await UserScriptInjected.respondToConfirmation(id, nonce, true, overrideTimestamp);
 					if (!result.success) {
 						throw new Error(result.message || result.detail || 'Could not act on confirmation');
 					}
@@ -181,6 +194,7 @@ $('#accept-all-btn').click(() => {
 	}
 
 	g_IsAutoConfirming = true;
+	g_AutoConfirmTimestampOffset = -20;
 	$confsContainer.find(':first-child').find('.accept').click();
 });
 
