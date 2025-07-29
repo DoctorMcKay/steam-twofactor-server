@@ -16,7 +16,7 @@
 // @require     https://raw.githubusercontent.com/DoctorMcKay/steam-twofactor-server/master/userscript/sha1.js
 // @connect     steamcommunity.com
 // @connect     *
-// @version     2.0.5
+// @version     2.0.6
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -232,28 +232,50 @@ unsafeWindow.addEventListener('load', function() {
 			return;
 		}
 
+		// Set up repeating interval to attempt to autofill Steam Guard code input
 		var interval = setInterval(function() {
-			var inputs = document.querySelectorAll('[class^=newlogindialog_ConfirmationEntryContainer] [class^=segmentedinputs_SegmentedCharacterInput] input');
-			var accountNameElement = document.querySelector('[class^=newlogindialog_AccountName]');
-			if (inputs.length > 0 && accountNameElement && accountNameElement.textContent.trim().length > 0) {
-				clearInterval(interval);
-
-				GM.xmlHttpRequest({
-					method: 'GET',
-					url: serverUrl + 'code/' + accountNameElement.textContent.trim(),
-					onload: function(response) {
-						if (!response.responseText || response.responseText.length != 5) {
-							return;
-						}
-
-						var dt = new DataTransfer();
-						dt.setData('Text', response.responseText);
-						var evt = new ClipboardEvent('paste', {clipboardData: dt, bubbles: true});
-
-						inputs[0].dispatchEvent(evt);
-					}
-				});
+			// Steam now uses generated responsive code and we can't rely on class names
+			var codePanelCandidates = document.querySelectorAll('div.Panel.Focusable');
+			var actualCodePanel = Array.from(codePanelCandidates).find(candidate => candidate.querySelectorAll('input[type="text"][maxlength="1"]').length == 5);
+			if (!actualCodePanel) {
+				// No code input found
+				return;
 			}
+
+			// We found a code input. Now we need to find the account name we're logging in to. It's contained within a <form>
+			var accountName = null;
+			Array.from(document.querySelectorAll('form')).forEach((formCandidate) => {
+				var notEmptyDivs = formCandidate.querySelectorAll('div:not(:empty)');
+				var accountNameOuter = Array.from(notEmptyDivs).find(div => div.textContent.trim().startsWith('Account:') && div.children.length == 1);
+				if (accountNameOuter) {
+					accountName = accountNameOuter.children[0].textContent.trim();
+				}
+			});
+
+			if (!accountName) {
+				// Couldn't find the account name
+				return;
+			}
+
+			// We found everything we need, so we can cancel this interval.
+			// If fetching the code fails for any reason, we don't want to constantly retry.
+			clearInterval(interval);
+
+			GM.xmlHttpRequest({
+				method: 'GET',
+				url: serverUrl + 'code/' + accountName,
+				onload: function(response) {
+					if (!response.responseText || response.responseText.length != 5) {
+						return;
+					}
+
+					var dt = new DataTransfer();
+					dt.setData('Text', response.responseText);
+					var evt = new ClipboardEvent('paste', {clipboardData: dt, bubbles: true});
+
+					actualCodePanel.children[0].dispatchEvent(evt);
+				}
+			});
 		}, 100);
 
 		// Also handle legacy login prompts, still used on some pages like /openid/login
